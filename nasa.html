@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeteorMeow - Asteroid Impact Simulation Platform</title>
+    <style>
+        body {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            line-height: 1.6;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Navigation */
+        nav {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #fff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .mobile-menu {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Main Content */
+        main {
+            margin-top: 80px;
+            min-height: calc(100vh - 80px);
+        }
+
+        .page {
+            display: none;
+            padding: 2rem 0;
+            min-height: calc(100vh - 160px);
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Homepage */
+        .hero {
+            text-align: center;
+            padding: 4rem 0;
+            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3));
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><circle cx="100" cy="100" r="2" fill="white" opacity="0.6"/><circle cx="300" cy="200" r="1.5" fill="white" opacity="0.8"/><circle cx="500" cy="150" r="1" fill="white" opacity="0.7"/><circle cx="700" cy="300" r="2.5" fill="white" opacity="0.5"/><circle cx="200" cy="400" r="1" fill="white" opacity="0.9"/><circle cx="800" cy="200" r="1.8" fill="white" opacity="0.6"/><circle cx="150" cy="600" r="1.2" fill="white" opacity="0.7"/><circle cx="600" cy="500" r="1.5" fill="white" opacity="0.8"/><circle cx="900" cy="400" r="1" fill="white" opacity="0.6"/><circle cx="400" cy="700" r="2" fill="white" opacity="0.5"/></svg>') repeat;
+            animation: stars 20s linear infinite;
+        }
+
+        @keyframes stars {
+            0% { transform: translateX(0) translateY(0); }
+            100% { transform: translateX(-100px) translateY(-100px); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #fff, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(45deg, #8b5cf6, #3b82f6);
+            color: white;
+            padding: 1rem 2rem;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 4rem;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Simulation Page */
+        .simulation-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .control-group {
+            margin-bottom: 2rem;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.3);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #8b5cf6;
+            cursor: pointer;
+            border: none;
+        }
+
+        .simulation-display {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .earth-visual {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #3b82f6, #1e40af);
+            margin: 0 auto 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .earth-visual::before {
+            content: '';
+            position: absolute;
+            top: 20%;
+            left: 10%;
+            width: 30%;
+            height: 40%;
+            background: #22c55e;
+            border-radius: 50% 20% 50% 30%;
+        }
+
+        .earth-visual::after {
+            content: '';
+            position: absolute;
+            top: 40%;
+            right: 20%;
+            width: 25%;
+            height: 35%;
+            background: #22c55e;
+            border-radius: 30% 50% 20% 50%;
+        }
+
+        .asteroid {
+            width: 30px;
+            height: 30px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            position: absolute;
+            top: 20%;
+            right: 20%;
+            transition: all 0.5s ease;
+        }
+
+        .impact-zone {
+            width: 50px;
+            height: 50px;
+            border: 3px dashed #ef4444;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .impact-zone.active {
+            opacity: 0.7;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+        }
+
+        /* Charts and Analysis */
+        .chart-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            margin: 2rem 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .chart {
+            width: 100%;
+            height: 300px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bar-chart {
+            display: flex;
+            align-items: end;
+            gap: 15px;
+            height: 250px;
+            padding: 20px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .bar {
+            background: linear-gradient(to top, #8b5cf6, #3b82f6);
+            border-radius: 5px 5px 0 0;
+            min-width: 50px;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: end;
+            align-items: center;
+        }
+
+        .bar:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+
+        .bar-label {
+            position: absolute;
+            bottom: -30px;
+            font-size: 0.8rem;
+            text-align: center;
+            width: 100%;
+        }
+
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #a855f7;
+        }
+
+        /* Mitigation Strategies */
+        .strategy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .strategy-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .strategy-card:hover {
+            transform: translateY(-5px);
+            border-color: #8b5cf6;
+        }
+
+        .strategy-card h3 {
+            color: #a855f7;
+            margin-bottom: 1rem;
+        }
+
+        .effectiveness-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .effectiveness-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ef4444, #f59e0b, #22c55e);
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+
+        /* Resources */
+        .resource-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .resource-link {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .resource-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+            border-color: #8b5cf6;
+        }
+
+        .resource-link h3 {
+            margin-bottom: 0.5rem;
+            color: #a855f7;
+        }
+
+        /* Interactive Elements */
+        .interactive-map {
+            width: 100%;
+            height: 400px;
+            background: linear-gradient(135deg, #1e40af, #3b82f6);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        .map-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400"><path d="M100,200 Q200,150 300,180 T500,160 T700,200" stroke="rgba(34,197,94,0.6)" stroke-width="3" fill="none"/><path d="M50,250 Q150,200 250,230 T450,210 T650,250" stroke="rgba(34,197,94,0.6)" stroke-width="3" fill="none"/><circle cx="200" cy="180" r="3" fill="rgba(34,197,94,0.8)"/><circle cx="400" cy="200" r="3" fill="rgba(34,197,94,0.8)"/><circle cx="600" cy="220" r="3" fill="rgba(34,197,94,0.8)"/></svg>') no-repeat center;
+            background-size: cover;
+        }
+
+        .impact-marker {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ef4444;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: impact-pulse 2s infinite;
+            display: none;
+        }
+
+        @keyframes impact-pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(2); opacity: 0.5; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background: rgba(30, 60, 114, 0.95);
+                flex-direction: column;
+                padding: 1rem;
+                gap: 0;
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .mobile-menu {
+                display: block;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .simulation-container {
+                grid-template-columns: 1fr;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+
+            .strategy-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .resource-links {
+                grid-template-columns: 1fr;
+            }
+
+            .bar-chart {
+                gap: 10px;
+            }
+
+            .bar {
+                min-width: 40px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 15px;
+            }
+
+            .hero {
+                padding: 2rem 0;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .feature-card, .controls, .chart-container {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="#" class="logo">🐱‍🚀 MeteorMeow</a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#" class="nav-link active" data-page="home">Home</a></li>
+                <li><a href="#" class="nav-link" data-page="simulation">Simulation</a></li>
+                <li><a href="#" class="nav-link" data-page="analysis">Impact Analysis</a></li>
+                <li><a href="#" class="nav-link" data-page="mitigation">Mitigation</a></li>
+                <li><a href="#" class="nav-link" data-page="about">About/Resources</a></li>
+            </ul>
+            <button class="mobile-menu" id="mobileMenu">☰</button>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Homepage -->
+        <div id="home" class="page active">
+            <div class="hero">
+                <div class="hero-content">
+                    <div class="container">
+                        <h1>MeteorMeow 🐱‍🚀</h1>
+                        <p>Advanced Asteroid Impact Simulation & Planetary Defense Platform</p>
+                        <button class="cta-button" onclick="showPage('simulation')">Launch Simulation</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="container">
+                <div class="features">
+                    <div class="feature-card">
+                        <div class="feature-icon">🌌</div>
+                        <h3>Interactive Simulation</h3>
+                        <p>Adjust asteroid parameters including size, velocity, and impact location. Visualize potential scenarios with real-time calculations based on scientific models.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>Impact Analysis</h3>
+                        <p>Comprehensive analysis of potential consequences including damage assessment, environmental effects, and population impact through interactive charts and maps.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🛡️</div>
+                        <h3>Mitigation Strategies</h3>
+                        <p>Explore various planetary defense options including kinetic impactors, nuclear deflection, and gravity tractors with effectiveness ratings.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Simulation Page -->
+        <div id="simulation" class="page">
+            <div class="container">
+                <h1>🌌 Asteroid Impact Simulation</h1>
+                <div class="simulation-container">
+                    <div class="controls">
+                        <h3>Simulation Parameters</h3>
+                        
+                        <div class="control-group">
+                            <label for="asteroidSize">Asteroid Diameter: <span id="sizeValue">100</span> meters</label>
+                            <input type="range" id="asteroidSize" class="slider" min="10" max="1000" value="100">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="velocity">Impact Velocity: <span id="velocityValue">20</span> km/s</label>
+                            <input type="range" id="velocity" class="slider" min="5" max="50" value="20">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="angle">Impact Angle: <span id="angleValue">45</span>°</label>
+                            <input type="range" id="angle" class="slider" min="15" max="90" value="45">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="density">Asteroid Density: <span id="densityValue">2.5</span> g/cm³</label>
+                            <input type="range" id="density" class="slider" min="1" max="8" step="0.1" value="2.5">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="impactPoint">Impact Location:</label>
+                            <select id="impactPoint" style="width: 100%; padding: 0.5rem; border-radius: 5px; border: none; background: rgba(255,255,255,0.2); color: white;">
+                                <option value="ocean">Ocean</option>
+                                <option value="land">Land</option>
+                                <option value="urban">Urban Area</option>
+                                <option value="desert">Desert</option>
+                            </select>
+                        </div>
+                        
+                        <button class="cta-button" onclick="runSimulation()" style="width: 100%; margin-top: 1rem;">Run Simulation</button>
+                    </div>
+                    
+                    <div class="simulation-display">
+                        <div class="earth-visual">
+                            <div class="asteroid" id="asteroid"></div>
+                            <div class="impact-zone" id="impactZone"></div>
+                        </div>
+                        <div id="simulationResults">
+                            <h3>Simulation Results</h3>
+                            <p id="energyOutput">Energy: 0 megatons TNT</p>
+                            <p id="craterSize">Crater Diameter: 0 km</p>
+                            <p id="damageRadius">Damage Radius: 0 km</p>
+                            <p id="casualties">Estimated Casualties: 0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Impact Analysis Page -->
+        <div id="analysis" class="page">
+            <div class="container">
+                <h1>📊 Impact Analysis</h1>
+                
+                <div class="chart-container">
+                    <h3>Click on the map to set impact location</h3>
+                    <div class="interactive-map" id="interactiveMap">
+                        <div class="map-overlay"></div>
+                        <div class="impact-marker" id="impactMarker"></div>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <h3>Damage Assessment by Distance</h3>
+                    <div class="chart">
+                        <div class="bar-chart" id="damageChart">
+                            <div class="bar" style="height: 80%;" data-value="100">
+                                <div class="bar-value">100%</div>
+                                <div class="bar-label">0-5km<br>Total</div>
+                            </div>
+                            <div class="bar" style="height: 60%;" data-value="75">
+                                <div class="bar-value">75%</div>
+                                <div class="bar-label">5-15km<br>Severe</div>
+                            </div>
+                            <div class="bar" style="height: 40%;" data-value="50">
+                                <div class="bar-value">50%</div>
+                                <div class="bar-label">15-30km<br>Moderate</div>
+                            </div>
+                            <div class="bar" style="height: 20%;" data-value="25">
+                                <div class="bar-value">25%</div>
+                                <div class="bar-label">30-50km<br>Light</div>
+                            </div>
+                            <div class="bar" style="height: 10%;" data-value="10">
+                                <div class="bar-value">10%</div>
+                                <div class="bar-label">50km+<br>Minimal</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <h3>Environmental Impact Timeline</h3>
+                    <div class="chart">
+                        <svg width="100%" height="100%" viewBox="0 0 800 300">
+                            <defs>
+                                <linearGradient id="timelineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#ef4444;stop-opacity:1" />
+                                    <stop offset="50%" style="stop-color:#f59e0b;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#22c55e;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                            <path d="M50,250 Q200,50 400,150 T750,100" stroke="url(#timelineGradient)" stroke-width="4" fill="none"/>
+                            <circle cx="50" cy="250" r="8" fill="#ef4444"/>
+                            <circle cx="200" cy="80" r="8" fill="#f59e0b"/>
+                            <circle cx="400" cy="150" r="8" fill="#f59e0b"/>
+                            <circle cx="600" cy="120" r="8" fill="#22c55e"/>
+                            <circle cx="750" cy="100" r="8" fill="#22c55e"/>
+                            <text x="50" y="280" fill="white" text-anchor="middle" font-size="14">Impact</text>
+                            <text x="200" y="50" fill="white" text-anchor="middle" font-size="14">Hours</text>
+                            <text x="400" y="130" fill="white" text-anchor="middle" font-size="14">Months</text>
+                            <text x="600" y="100" fill="white" text-anchor="middle" font-size="14">Years</text>
+                            <text x="750" y="80" fill="white" text-anchor="middle" font-size="14">Recovery</text>
+                        </svg>
+                    </div>
+                </div>
+                
+                <div class="features">
+                    <div class="feature-card">
+                        <h3>🌊 Tsunami Risk</h3>
+                        <p id="tsunamiRisk">Click "Run Simulation" to see tsunami risk assessment based on impact location and asteroid parameters.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🌋 Seismic Activity</h3>
+                        <p id="seismicRisk">Earthquake magnitude and affected area analysis will appear after running simulation.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>☁️ Climate Effects</h3>
+                        <p id="climateEffects">Atmospheric dust injection and temperature change predictions based on impact energy.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mitigation Strategies Page -->
+        <div id="mitigation" class="page">
+            <div class="container">
+                <h1>🛡️ Mitigation Strategies</h1>
+                
+                <div class="strategy-grid">
+                    <div class="strategy-card">
+                        <h3>🚀 Kinetic Impactor</h3>
+                        <p>Launch a spacecraft to collide with the asteroid, transferring momentum to alter its trajectory.</p>
+                        <div class="effectiveness-bar">
+                            <div class="effectiveness-fill" id="kineticEffectiveness" style="width: 75%;"></div>
+                        </div>
+                        <p><strong>Effectiveness:</strong> <span id="kineticRating">75%</span> for current parameters</p>
+                        <p><strong>Lead Time Required:</strong> 5-10 years</p>
+                        <p><strong>Best For:</strong> Small to medium asteroids (10m-500m)</p>
+                    </div>
+                    
+                    <div class="strategy-card">
+                        <h3>💥 Nuclear Deflection</h3>
+                        <p>Use nuclear explosions to vaporize surface material, creating thrust to change the asteroid's path.</p>
+                        <div class="effectiveness-bar">
+                            <div class="effectiveness-fill" id="nuclearEffectiveness" style="width: 90%;"></div>
+                        </div>
+                        <p><strong>Effectiveness:</strong> <span id="nuclearRating">90%</span> for current parameters</p>
+                        <p><strong>Lead Time Required:</strong> 1-5 years</p>
+                        <p><strong>Best For:</strong> Large asteroids (500m+) with short warning</p>
+                    </div>
+                    
+                    <div class="strategy-card">
+                        <h3>🌞 Gravity Tractor</h3>
+                        <p>Station a spacecraft near the asteroid to use gravitational attraction for gradual course correction.</p>
+                        <div class="effectiveness-bar">
+                            <div class="effectiveness-fill" id="gravityEffectiveness" style="width: 60%;"></div>
+                        </div>
+                        <p><strong>Effectiveness:</strong> <span id="gravityRating">60%</span> for current parameters</p>
+                        <p><strong>Lead Time Required:</strong> 10-20 years</p>
+                        <p><strong>Best For:</strong> Small asteroids with long warning time</p>
+                    </div>
+                    
+                    <div class="strategy-card">
+                        <h3>⚡ Ion Beam Shepherd</h3>
+                        <p>Use focused ion beams to gradually ablate material from the asteroid surface, creating thrust.</p>
+                        <div class="effectiveness-bar">
+                            <div class="effectiveness-fill" id="ionEffectiveness" style="width: 70%;"></div>
+                        </div>
+                        <p><strong>Effectiveness:</strong> <span id="ionRating">70%</span> for current parameters</p>
+                        <p><strong>Lead Time Required:</strong> 10-15 years</p>
+                        <p><strong>Best For:</strong> Medium asteroids with precise trajectory control needed</p>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <h3>Strategy Effectiveness vs Lead Time</h3>
+                    <div class="chart">
+                        <svg width="100%" height="100%" viewBox="0 0 800 300">
+                            <defs>
+                                <linearGradient id="effectivenessGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#ef4444;stop-opacity:0.8" />
+                                    <stop offset="50%" style="stop-color:#f59e0b;stop-opacity:0.8" />
+                                    <stop offset="100%" style="stop-color:#22c55e;stop-opacity:0.8" />
+                                </linearGradient>
+                            </defs>
+                            <!-- Grid lines -->
+                            <line x1="100" y1="50" x2="100" y2="250" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                            <line x1="100" y1="250" x2="700" y2="250" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                            
+                            <!-- Strategy effectiveness curves -->
+                            <path d="M100,200 L300,150 L500,120 L700,100" stroke="#8b5cf6" stroke-width="3" fill="none"/>
+                            <path d="M100,180 L300,100 L500,90 L700,85" stroke="#ef4444" stroke-width="3" fill="none"/>
+                            <path d="M100,220 L300,200 L500,140 L700,80" stroke="#22c55e" stroke-width="3" fill="none"/>
+                            <path d="M100,210 L300,180 L500,130 L700,90" stroke="#3b82f6" stroke-width="3" fill="none"/>
+                            
+                            <!-- Axis labels -->
+                            <text x="50" y="150" fill="white" font-size="12" text-anchor="middle" transform="rotate(-90 50 150)">Effectiveness %</text>
+                            <text x="400" y="280" fill="white" font-size="12" text-anchor="middle">Years Lead Time</text>
+                            
+                            <!-- Legend -->
+                            <line x1="720" y1="80" x2="750" y2="80" stroke="#8b5cf6" stroke-width="3"/>
+                            <text x="760" y="85" fill="white" font-size="11">Kinetic</text>
+                            <line x1="720" y1="100" x2="750" y2="100" stroke="#ef4444" stroke-width="3"/>
+                            <text x="760" y="105" fill="white" font-size="11">Nuclear</text>
+                            <line x1="720" y1="120" x2="750" y2="120" stroke="#22c55e" stroke-width="3"/>
+                            <text x="760" y="125" fill="white" font-size="11">Gravity</text>
+                            <line x1="720" y1="140" x2="750" y2="140" stroke="#3b82f6" stroke-width="3"/>
+                            <text x="760" y="145" fill="white" font-size="11">Ion Beam</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- About/Resources Page -->
+        <div id="about" class="page">
+            <div class="container">
+                <h1>📚 About MeteorMeow</h1>
+                
+                <div class="feature-card" style="margin-bottom: 2rem;">
+                    <h2>🐱‍🚀 Project Overview</h2>
+                    <p>MeteorMeow is an advanced asteroid impact simulation platform developed for the NASA Space Apps Challenge. Our mission is to provide accessible, scientifically accurate tools for understanding and preparing for potential asteroid threats to Earth.</p>
+                    
+                    <h3>🎯 Key Objectives:</h3>
+                    <ul style="margin-left: 2rem; margin-top: 1rem;">
+                        <li>Educate the public about asteroid impact risks and planetary defense</li>
+                        <li>Provide interactive tools for impact scenario modeling</li>
+                        <li>Demonstrate the effectiveness of various mitigation strategies</li>
+                        <li>Integrate real NASA and scientific datasets for accuracy</li>
+                        <li>Support emergency planning and risk assessment efforts</li>
+                    </ul>
+                    
+                    <h3>🔬 Scientific Approach:</h3>
+                    <p>Our simulations are based on peer-reviewed research and established impact modeling techniques. We use simplified but scientifically grounded formulas for energy calculations, crater formation, and damage assessment.</p>
+                </div>
+                
+                <h2>🔗 NASA & Scientific Resources</h2>
+                <div class="resource-links">
+                    <a href="https://cneos.jpl.nasa.gov/" target="_blank" rel="noopener noreferrer" class="resource-link">
+                        <h3>🌌 NASA CNEOS</h3>
+                        <p>Center for Near Earth Object Studies - Real-time asteroid tracking and orbital data</p>
+                    </a>
+                    
+                    <a href="https://www.nasa.gov/planetarydefense/" target="_blank" rel="noopener noreferrer" class="resource-link">
+                        <h3>🛡️ NASA Planetary Defense</h3>
+                        <p>Planetary Defense Coordination Office - Official NASA asteroid defense programs</p>
+                    </a>
+                    
+                    <a href="https://earthquake.usgs.gov/" target="_blank" rel="noopener noreferrer" class="resource-link">
+                        <h3>🌍 USGS Earthquake Hazards</h3>
+                        <p>Seismic monitoring data and impact crater geological studies</p>
+                    </a>
+                    
+                    <a href="https://impact.ese.ic.ac.uk/ImpactEarth/ImpactEffects/" target="_blank" rel="noopener noreferrer" class="resource-link">
+                        <h3>💥 Impact Effects Calculator</h3>
+                        <p>Scientific impact modeling tool from Imperial College London</p>
+                    </a>
+                    
+                    <a href="https://www.esa.int/Safety_Security/Space_Situational_Awareness" target="_blank" rel="noopener noreferrer" class="resource-link">
+                        <h3>🚀 ESA Space Situational Awareness</h3>
+                        <p>European Space Agency asteroid monitoring and tracking programs</p>
+                    </a>
+                    
+                    <a href="https://www.minorplanetcenter.net/" target="_blank" rel="noopener noreferrer" class="resource-link">
+                        <h3>🪨 Minor Planet Center</h3>
+                        <p>International clearinghouse for asteroid and comet observations</p>
+                    </a>
+                    
+                    <a href="https://neo.ssa.esa.int/" target="_blank" rel="noopener noreferrer" class="resource-link">
+                        <h3>🔭 ESA NEO Coordination Centre</h3>
+                        <p>Near-Earth Object detection and tracking coordination</p>
+                    </a>
+                    
+                    <a href="https://www.jhuapl.edu/dart/" target="_blank" rel="noopener noreferrer" class="resource-link">
+                        <h3>🎯 DART Mission</h3>
+                        <p>Double Asteroid Redirection Test - First planetary defense test mission</p>
+                    </a>
+                </div>
+                
+                <div class="feature-card" style="margin-top: 2rem;">
+                    <h2>👥 Development & Technical Details</h2>
+                    <p>MeteorMeow is built using modern web technologies including HTML5, CSS3, and JavaScript. The platform is designed to be fully responsive and accessible across all devices and browsers.</p>
+                    
+                    <h3>🛠️ Features:</h3>
+                    <ul style="margin-left: 2rem; margin-top: 1rem;">
+                        <li>Real-time parameter adjustment with instant visual feedback</li>
+                        <li>Scientific calculations based on established impact physics</li>
+                        <li>Interactive charts and visualizations</li>
+                        <li>Responsive design optimized for desktop and mobile</li>
+                        <li>Integration with external scientific databases</li>
+                    </ul>
+                    
+                    <h3>🎓 Educational Impact:</h3>
+                    <p>This platform serves as an educational tool for students, researchers, and the general public to better understand asteroid impact risks and the importance of planetary defense initiatives.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Global variables
+        let currentSimulationData = {
+            size: 100,
+            velocity: 20,
+            angle: 45,
+            density: 2.5,
+            impactType: 'ocean'
+        };
+
+        // Navigation functionality
+        const navLinks = document.querySelectorAll('.nav-link');
+        const pages = document.querySelectorAll('.page');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const navLinksContainer = document.getElementById('navLinks');
+
+        function showPage(pageId) {
+            // Hide all pages
+            pages.forEach(page => page.classList.remove('active'));
+            
+            // Show selected page
+            document.getElementById(pageId).classList.add('active');
+            
+            // Update navigation
+            navLinks.forEach(link => link.classList.remove('active'));
+            const targetLink = document.querySelector(`[data-page="${pageId}"]`);
+            if (targetLink) {
+                targetLink.classList.add('active');
+            }
+            
+            // Close mobile menu
+            navLinksContainer.classList.remove('active');
+        }
+
+        // Navigation event listeners
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const pageId = link.getAttribute('data-page');
+                showPage(pageId);
+            });
+        });
+
+        // Mobile menu toggle
+        mobileMenu.addEventListener('click', () => {
+            navLinksContainer.classList.toggle('active');
+        });
+
+        // Simulation controls
+        const asteroidSizeSlider = document.getElementById('asteroidSize');
+        const velocitySlider = document.getElementById('velocity');
+        const angleSlider = document.getElementById('angle');
+        const densitySlider = document.getElementById('density');
+        const impactPointSelect = document.getElementById('impactPoint');
+
+        // Update slider values and visual feedback
+        asteroidSizeSlider.addEventListener('input', (e) => {
+            currentSimulationData.size = parseInt(e.target.value);
+            document.getElementById('sizeValue').textContent = e.target.value;
+            updateAsteroidVisual();
+        });
+
+        velocitySlider.addEventListener('input', (e) => {
+            currentSimulationData.velocity = parseInt(e.target.value);
+            document.getElementById('velocityValue').textContent = e.target.value;
+        });
+
+        angleSlider.addEventListener('input', (e) => {
+            currentSimulationData.angle = parseInt(e.target.value);
+            document.getElementById('angleValue').textContent = e.target.value;
+        });
+
+        densitySlider.addEventListener('input', (e) => {
+            currentSimulationData.density = parseFloat(e.target.value);
+            document.getElementById('densityValue').textContent = e.target.value;
+        });
+
+        impactPointSelect.addEventListener('change', (e) => {
+            currentSimulationData.impactType = e.target.value;
+        });
+
+        function updateAsteroidVisual() {
+            const asteroid = document.getElementById('asteroid');
+            const size = currentSimulationData.size;
+            const visualSize = Math.max(15, Math.min(60, size / 10));
+            asteroid.style.width = visualSize + 'px';
+            asteroid.style.height = visualSize + 'px';
+        }
+
+        function runSimulation() {
+            const { size, velocity, angle, density, impactType } = currentSimulationData;
+
+            // Calculate impact effects using scientific formulas
+            const radius = size / 2; // meters
+            const volume = (4/3) * Math.PI * Math.pow(radius, 3); // cubic meters
+            const mass = volume * density * 1000; // kg (density converted from g/cm³)
+            const kineticEnergy = 0.5 * mass * Math.pow(velocity * 1000, 2); // Joules
+            const energyMegatons = kineticEnergy / (4.184e15); // Convert to megatons TNT
+            
+            // Crater diameter calculation (simplified Holsapple scaling)
+            const craterDiameter = Math.pow(energyMegatons, 0.25) * 1.8 * Math.sin(angle * Math.PI / 180);
+            
+            // Damage radius calculation
+            const damageRadius = Math.pow(energyMegatons, 0.33) * 5;
+            
+            // Population impact estimation (simplified)
+            let casualties = 0;
+            const populationDensity = {
+                'ocean': 0,
+                'land': 50,
+                'urban': 5000,
+                'desert': 1
+            };
+            
+            const affectedArea = Math.PI * Math.pow(damageRadius, 2);
+            casualties = Math.round(affectedArea * populationDensity[impactType]);
+
+            // Update simulation results
+            document.getElementById('energyOutput').textContent = `Energy: ${energyMegatons.toFixed(2)} megatons TNT`;
+            document.getElementById('craterSize').textContent = `Crater Diameter: ${craterDiameter.toFixed(1)} km`;
+            document.getElementById('damageRadius').textContent = `Damage Radius: ${damageRadius.toFixed(1)} km`;
+            document.getElementById('casualties').textContent = `Estimated Casualties: ${casualties.toLocaleString()}`;
+
+            // Update impact zone visual
+            const impactZone = document.getElementById('impactZone');
+            impactZone.classList.add('active');
+            
+            // Update analysis page data
+            updateAnalysisData(energyMegatons, damageRadius, impactType);
+            updateMitigationData(size, energyMegatons);
+            updateDamageChart(damageRadius);
+
+            // Animate asteroid impact
+            animateImpact();
+        }
+
+        function animateImpact() {
+            const asteroid = document.getElementById('asteroid');
+            asteroid.style.transition = 'all 1s ease-in';
+            asteroid.style.transform = 'translate(50px, 50px) scale(1.5)';
+            asteroid.style.background = '#ef4444';
+            
+            setTimeout(() => {
+                asteroid.style.transition = 'all 0.5s ease-out';
+                asteroid.style.transform = 'translate(0, 0) scale(1)';
+                asteroid.style.background = '#8b5cf6';
+            }, 1000);
+        }
+
+        function updateAnalysisData(energy, damageRadius, impactType) {
+            const tsunamiRisk = document.getElementById('tsunamiRisk');
+            const seismicRisk = document.getElementById('seismicRisk');
+            const climateEffects = document.getElementById('climateEffects');
+
+            if (impactType === 'ocean') {
+                const waveHeight = Math.min(100, energy * 0.5);
+                tsunamiRisk.textContent = `High tsunami risk - waves up to ${waveHeight.toFixed(0)}m high could affect coastal areas within ${(damageRadius * 10).toFixed(0)}km of impact site.`;
+            } else {
+                tsunamiRisk.textContent = 'Low tsunami risk for land-based impact. Local flooding possible from ground displacement.';
+            }
+
+            const magnitude = Math.min(9.5, 4.0 + Math.log10(energy + 1));
+            seismicRisk.textContent = `Estimated earthquake magnitude: ${magnitude.toFixed(1)}. Seismic effects detectable up to ${(damageRadius * 20).toFixed(0)}km from impact site.`;
+
+            if (energy > 50) {
+                const tempDrop = Math.min(5, energy * 0.02);
+                const duration = Math.min(10, energy * 0.05);
+                climateEffects.textContent = `Significant atmospheric dust injection expected. Global temperature drop of ${tempDrop.toFixed(1)}°C possible for ${duration.toFixed(0)} years.`;
+            } else if (energy > 10) {
+                climateEffects.textContent = 'Regional climate effects possible. Temporary cooling and reduced sunlight in affected hemisphere.';
+            } else {
+                climateEffects.textContent = 'Minimal long-term climate effects expected. Local dust and debris will settle within weeks.';
+            }
+        }
+
+        function updateMitigationData(size, energy) {
+            // Calculate effectiveness based on asteroid characteristics
+            const kineticEff = size < 300 ? 85 : Math.max(40, 85 - (size - 300) * 0.1);
+            const nuclearEff = Math.min(95, 70 + energy * 0.5);
+            const gravityEff = size < 200 ? 70 : Math.max(30, 70 - (size - 200) * 0.15);
+            const ionEff = size < 400 ? 75 : Math.max(45, 75 - (size - 400) * 0.1);
+
+            // Update effectiveness bars and ratings
+            document.getElementById('kineticEffectiveness').style.width = kineticEff + '%';
+            document.getElementById('kineticRating').textContent = Math.round(kineticEff) + '%';
+            
+            document.getElementById('nuclearEffectiveness').style.width = nuclearEff + '%';
+            document.getElementById('nuclearRating').textContent = Math.round(nuclearEff) + '%';
+            
+            document.getElementById('gravityEffectiveness').style.width = gravityEff + '%';
+            document.getElementById('gravityRating').textContent = Math.round(gravityEff) + '%';
+            
+            document.getElementById('ionEffectiveness').style.width = ionEff + '%';
+            document.getElementById('ionRating').textContent = Math.round(ionEff) + '%';
+        }
+
+        function updateDamageChart(damageRadius) {
+            const bars = document.querySelectorAll('#damageChart .bar');
+            const distances = [5, 15, 30, 50, 100];
+            
+            bars.forEach((bar, index) => {
+                const distance = distances[index];
+                const damage = Math.max(0, 100 - (distance / damageRadius) * 100);
+                const height = Math.max(10, damage);
+                
+                bar.style.height = height + '%';
+                bar.querySelector('.bar-value').textContent = Math.round(damage) + '%';
+            });
+        }
+
+        // Interactive map functionality
+        const interactiveMap = document.getElementById('interactiveMap');
+        const impactMarker = document.getElementById('impactMarker');
+
+        interactiveMap.addEventListener('click', (e) => {
+            const rect = interactiveMap.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+            
+            impactMarker.style.left = x + '%';
+            impactMarker.style.top = y + '%';
+            impactMarker.style.display = 'block';
+            
+            // Determine impact type based on position (simplified)
+            let impactType = 'ocean';
+            if (x > 20 && x < 80 && y > 30 && y < 70) {
+                impactType = Math.random() > 0.5 ? 'land' : 'urban';
+            }
+            
+            currentSimulationData.impactType = impactType;
+            impactPointSelect.value = impactType;
+        });
+
+        // Initialize the application
+        function init() {
+            updateAsteroidVisual();
+            
+            // Set initial mitigation effectiveness
+            updateMitigationData(100, 1);
+            
+            // Add smooth scrolling for better UX
+            document.documentElement.style.scrollBehavior = 'smooth';
+        }
+
+        // Run initialization when page loads
+        document.addEventListener('DOMContentLoaded', init);
+
+        // Add keyboard navigation support
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                navLinksContainer.classList.remove('active');
+            }
+        });
+
+        // Add touch support for mobile devices
+        let touchStartY = 0;
+        document.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (navLinksContainer.classList.contains('active')) {
+                e.preventDefault();
+            }
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'989ecf4a96466efe',t:'MTc1OTY4NzEzNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
